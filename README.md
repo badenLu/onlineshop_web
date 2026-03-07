@@ -391,7 +391,7 @@ POST /api/auth/logout → token added to Redis blacklist
 
 ### One-Command Start
 ```bash
-git clone https://github.com/yourusername/onlineshop.git
+git clone https://github.com/badenLu/onlineshop.git
 cd onlineshop
 
 docker compose up -d
