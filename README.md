@@ -10,7 +10,7 @@
 ![Elasticsearch](https://img.shields.io/badge/Elasticsearch-8.11-yellow?logo=elasticsearch)
 ![Kafka](https://img.shields.io/badge/Kafka-7.5-black?logo=apachekafka)
 ![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)
-![CI](https://img.shields.io/github/actions/workflow/status/yourusername/onlineshop/ci.yml?label=CI&logo=githubactions)
+![CI](https://img.shields.io/github/actions/workflow/status/badenLu/onlineshop/ci.yml?label=CI&logo=githubactions)
 
 ---
 
