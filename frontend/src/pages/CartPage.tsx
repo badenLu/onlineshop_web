@@ -62,9 +62,8 @@ export default function CartPage() {
     ];
 
     if (!loading && items.length === 0) {
-        return <div style={{ padding: 48 }}><Empty description="Your cart is empty" /></div>;
+        return <div style={{ padding: 48, width: '100%', textAlign: 'center' }}><Empty description="Your cart is empty" /></div>;
     }
-
     return (
         <div style={{ padding: 24 }}>
             <h2>Shopping Cart</h2>

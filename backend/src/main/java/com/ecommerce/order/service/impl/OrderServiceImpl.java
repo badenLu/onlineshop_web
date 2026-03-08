@@ -168,7 +168,26 @@ public class OrderServiceImpl implements OrderService {
             orders = orderRepository.findByUserId(userId, pageable);
         }
 
-        return orders.map(this::toResponse);
+        return orders.map(this::toListResponse);
+    }
+
+    private OrderResponse toListResponse(Order order) {
+        return OrderResponse.builder()
+                .id(order.getId())
+                .orderNo(order.getOrderNo())
+                .totalAmount(order.getTotalAmount())
+                .payAmount(order.getPayAmount())
+                .freight(order.getFreight())
+                .status(order.getStatus().name())
+                .paymentType(order.getPaymentType())
+                .paymentTime(order.getPaymentTime())
+                .receiverName(order.getReceiverName())
+                .receiverPhone(order.getReceiverPhone())
+                .receiverAddress(order.getReceiverAddress())
+                .remark(order.getRemark())
+                .items(null)
+                .createdAt(order.getCreatedAt())
+                .build();
     }
 
     @Override

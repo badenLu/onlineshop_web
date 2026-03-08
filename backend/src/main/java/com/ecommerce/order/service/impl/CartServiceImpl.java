@@ -31,7 +31,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public void addToCart(Long userId, Long skuId, int quantity) {
         // Verify SKU exists and has stock
-        ProductSku sku = productSkuRepository.findById(skuId)
+        ProductSku sku = productSkuRepository.findByIdWithProduct(skuId)
                 .orElseThrow(() -> BusinessException.notFound("SKU"));
 
         if (sku.getStock() < quantity) {
@@ -70,7 +70,7 @@ public class CartServiceImpl implements CartService {
             Long skuId = Long.valueOf((String) entry.getKey());
             CartItem item = deserialize((String) entry.getValue());
 
-            productSkuRepository.findById(skuId).ifPresent(sku -> {
+            productSkuRepository.findByIdWithProduct(skuId).ifPresent(sku -> {
                 Product product = sku.getProduct();
                 result.add(CartItemResponse.builder()
                         .skuId(sku.getId())

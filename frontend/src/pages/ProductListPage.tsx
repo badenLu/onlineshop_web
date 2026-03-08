@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Card, Row, Col, Tag, Spin, Input, Select, Pagination, message } from 'antd';
+import {Card, Row, Col, Tag, Spin, Input, Select, Pagination, message, Button} from 'antd';
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { productApi } from '../services/product';
 import { cartApi } from '../services/cart';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 
 export default function ProductListPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,7 +12,7 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [sort, setSort] = useState<string>('');
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -31,14 +31,7 @@ export default function ProductListPage() {
 
   useEffect(() => { fetchProducts(); }, [page, sort]);
 
-  const addToCart = async (skuId: number) => {
-    try {
-      await cartApi.add(skuId, 1);
-      message.success('Added to cart');
-    } catch {
-      // handled
-    }
-  };
+
 
   return (
     <div style={{ padding: 24 }}>
@@ -67,32 +60,48 @@ export default function ProductListPage() {
         <Row gutter={[16, 16]}>
           {products.map((p: any) => (
             <Col key={p.id} xs={24} sm={12} md={8} lg={6}>
-              <Card
-                hoverable
-                cover={<img alt={p.name} src={p.mainImage} style={{ height: 200, objectFit: 'cover' }} />}
-                actions={[
-                  <ShoppingCartOutlined key="cart" onClick={() => p.skus?.[0] && addToCart(p.skus[0].id)} />,
-                ]}
-                onClick={() => navigate(`/products/${p.id}`)}
-              >
-                <Card.Meta
-                  title={p.name}
-                  description={
-                    <div>
-                      <span style={{ color: '#f5222d', fontSize: 18, fontWeight: 'bold' }}>€{p.price}</span>
-                      {p.originalPrice && (
-                        <span style={{ textDecoration: 'line-through', color: '#999', marginLeft: 8 }}>
-                          €{p.originalPrice}
-                        </span>
-                      )}
-                      <div style={{ marginTop: 4 }}>
-                        <Tag color="blue">{p.categoryName}</Tag>
-                        <Tag color="green">Sales: {p.salesCount}</Tag>
-                      </div>
-                    </div>
-                  }
-                />
-              </Card>
+                <Card
+                    hoverable
+                    cover={<img alt={p.name} src={p.mainImage} style={{ height: 200, objectFit: 'cover' }} />}>
+                    <Card.Meta
+                        title={p.name}
+                        description={
+                            <div>
+                                <span style={{ color: '#f5222d', fontSize: 18, fontWeight: 'bold' }}>€{p.price}</span>
+                                {p.originalPrice && (
+                                    <span style={{ textDecoration: 'line-through', color: '#999', marginLeft: 8 }}>€{p.originalPrice}</span>
+                                )}
+                                <div style={{ marginTop: 4 }}>
+                                    <Tag color="blue">{p.categoryName}</Tag>
+                                    <Tag color="green">Sales: {p.salesCount}</Tag>
+                                </div>
+                                <Button
+                                    type="primary"
+                                    icon={<ShoppingCartOutlined />}
+                                    size="small"
+                                    style={{ marginTop: 8 }}
+                                    onClick={async (e) => {
+                                        e.stopPropagation();
+                                        try {
+                                            // Get product detail to find first SKU
+                                            const detail: any = await productApi.detail(p.id);
+                                            const firstSku = detail.data?.skus?.[0];
+                                            if (firstSku) {
+                                                await cartApi.add(firstSku.id, 1);
+                                                message.success('Added to cart');
+                                            } else {
+                                                message.warning('No SKU available');
+                                            }
+                                        } catch {
+                                            // handled by interceptor
+                                        }
+                                    }}>
+                                    Add to Cart
+                                </Button>
+                            </div>
+                        }
+                    />
+                </Card>
             </Col>
           ))}
         </Row>

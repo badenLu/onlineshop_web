@@ -65,15 +65,15 @@ public class ProductServiceImpl implements ProductService {
         product.setStock(skus.stream().mapToInt(ProductSku::getStock).sum());
 
         productRepository.save(product);
-        return toResponse(product);
+        return toDetailResponse(product);
     }
 
     @Override
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getProduct(Long id) {
-        Product product = productRepository.findById(id)
+        Product product = productRepository.findByIdWithSkus(id)
                 .orElseThrow(() -> BusinessException.notFound("Product"));
-        return toResponse(product);
+        return toDetailResponse(product);
     }
 
     @Override
@@ -88,14 +88,14 @@ public class ProductServiceImpl implements ProductService {
             products = productRepository.findByStatus(ProductStatus.ACTIVE, pageable);
         }
 
-        return products.map(this::toResponse);
+        return products.map(this::toListResponse);
     }
 
     @Override
     public Page<ProductResponse> searchProducts(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         return productRepository.searchByKeyword(keyword, ProductStatus.ACTIVE, pageable)
-                .map(this::toResponse);
+                .map(this::toListResponse);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class ProductServiceImpl implements ProductService {
         product.setImages(request.getImages());
 
         productRepository.save(product);
-        return toResponse(product);
+        return toDetailResponse(product);
     }
 
     @Override
@@ -171,4 +171,55 @@ public class ProductServiceImpl implements ProductService {
                 .createdAt(product.getCreatedAt())
                 .build();
     }
+
+    // 列表用（不加载 SKUs）
+    private ProductResponse toListResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .categoryId(product.getCategory().getId())
+                .categoryName(product.getCategory().getName())
+                .price(product.getPrice())
+                .originalPrice(product.getOriginalPrice())
+                .stock(product.getStock())
+                .salesCount(product.getSalesCount())
+                .mainImage(product.getMainImage())
+                .images(product.getImages())
+                .status(product.getStatus().name())
+                .skus(null)  // 列表不需要 SKU 详情
+                .createdAt(product.getCreatedAt())
+                .build();
+    }
+
+    // 详情用（加载 SKUs）
+    private ProductResponse toDetailResponse(Product product) {
+        List<ProductResponse.SkuResponse> skuResponses = product.getSkus().stream()
+                .map(sku -> ProductResponse.SkuResponse.builder()
+                        .id(sku.getId())
+                        .skuCode(sku.getSkuCode())
+                        .attributes(sku.getAttributes())
+                        .price(sku.getPrice())
+                        .stock(sku.getStock())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .categoryId(product.getCategory().getId())
+                .categoryName(product.getCategory().getName())
+                .price(product.getPrice())
+                .originalPrice(product.getOriginalPrice())
+                .stock(product.getStock())
+                .salesCount(product.getSalesCount())
+                .mainImage(product.getMainImage())
+                .images(product.getImages())
+                .status(product.getStatus().name())
+                .skus(skuResponses)
+                .createdAt(product.getCreatedAt())
+                .build();
+    }
+
 }

@@ -1,12 +1,11 @@
 import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Button, Space } from 'antd';
-import { ShoppingCartOutlined, UserOutlined, LogoutOutlined, ShopOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
+import { ShoppingCartOutlined, LogoutOutlined } from '@ant-design/icons';
 import LoginPage from './pages/LoginPage';
 import ProductListPage from './pages/ProductListPage';
 import CartPage from './pages/CartPage';
 import OrderListPage from './pages/OrderListPage';
-
-const { Header, Content } = Layout;
+import CheckoutPage from './pages/CheckoutPage';
 
 function AppLayout() {
     const navigate = useNavigate();
@@ -18,34 +17,37 @@ function AppLayout() {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Link to="/" style={{ color: '#fff', fontSize: 20, fontWeight: 'bold' }}>
-                    🛒 OnlineShop
-                </Link>
-                <Space>
-                    <Menu theme="dark" mode="horizontal" selectable={false} items={[
-                        { key: 'products', icon: <ShopOutlined />, label: <Link to="/">Products</Link> },
-                        { key: 'cart', icon: <ShoppingCartOutlined />, label: <Link to="/cart">Cart</Link> },
-                        { key: 'orders', icon: <UserOutlined />, label: <Link to="/orders">Orders</Link> },
-                    ]} />
-                    {token ? (
-                        <Button icon={<LogoutOutlined />} onClick={logout} type="text" style={{ color: '#fff' }}>
-                            Logout
-                        </Button>
-                    ) : (
-                        <Button type="primary" onClick={() => navigate('/login')}>Login</Button>
-                    )}
-                </Space>
-            </Header>
-            <Content>
+        <div style={{ minHeight: '100vh' }}>
+            <nav style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: '#001529', padding: '0 24px', height: 56,
+                width: '100%'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+                    <Link to="/" style={{ color: '#fff', fontSize: 20, fontWeight: 'bold', textDecoration: 'none' }}>
+                        🛒 OnlineShop
+                    </Link>
+                    <Link to="/" style={{ color: '#ffffffa6', textDecoration: 'none' }}>Products</Link>
+                    <Link to="/cart" style={{ color: '#ffffffa6', textDecoration: 'none' }}>
+                        <ShoppingCartOutlined /> Cart
+                    </Link>
+                    <Link to="/orders" style={{ color: '#ffffffa6', textDecoration: 'none' }}>Orders</Link>
+                </div>
+                {token ? (
+                    <Button icon={<LogoutOutlined />} onClick={logout} type="text" style={{ color: '#fff' }}>Logout</Button>
+                ) : (
+                    <Button type="primary" onClick={() => navigate('/login')}>Login</Button>
+                )}
+            </nav>
+            <div>
                 <Routes>
                     <Route path="/" element={<ProductListPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/orders" element={<OrderListPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
                 </Routes>
-            </Content>
-        </Layout>
+            </div>
+        </div>
     );
 }
 

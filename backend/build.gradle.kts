@@ -37,6 +37,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")

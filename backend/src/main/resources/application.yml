@@ -6,6 +6,8 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Europe/Berlin
     default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
 
   flyway:
     enabled: true
