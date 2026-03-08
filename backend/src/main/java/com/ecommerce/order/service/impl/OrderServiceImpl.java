@@ -1,6 +1,8 @@
 package com.ecommerce.order.service.impl;
 
 import com.ecommerce.common.exception.BusinessException;
+import com.ecommerce.infrastructure.kafka.OrderEventProducer;
+import com.ecommerce.order.dto.OrderEvent;
 import com.ecommerce.order.dto.OrderRequest;
 import com.ecommerce.order.dto.OrderResponse;
 import com.ecommerce.order.dto.PaymentRequest;
@@ -51,6 +53,7 @@ public class OrderServiceImpl implements OrderService {
 
     private static final String IDEMPOTENCY_PREFIX = "order:idempotent:";
     private static final AtomicInteger SEQUENCE = new AtomicInteger(0);
+    private final OrderEventProducer orderEventProducer;
 
     @Override
     @Transactional
@@ -129,12 +132,14 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
 
             // 5. Deduct stock in DB (final consistency)
-            for (OrderRequest.OrderItemRequest itemReq : request.getItems()) {
-                int affected = productSkuRepository.deductStock(itemReq.getSkuId(), itemReq.getQuantity());
-                if (affected == 0) {
-                    log.warn("DB stock deduction failed for SKU: {}, Redis already deducted", itemReq.getSkuId());
-                }
-            }
+//            for (OrderRequest.OrderItemRequest itemReq : request.getItems()) {
+//                int affected = productSkuRepository.deductStock(itemReq.getSkuId(), itemReq.getQuantity());
+//                if (affected == 0) {
+//                    log.warn("DB stock deduction failed for SKU: {}, Redis already deducted", itemReq.getSkuId());
+//                }
+//            }
+            OrderEvent event = buildOrderEvent("ORDER_CREATED", order, request.getItems());
+            orderEventProducer.sendOrderCreated(event);
 
             // 6. Clear purchased items from cart
             for (OrderRequest.OrderItemRequest itemReq : request.getItems()) {
@@ -204,10 +209,29 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
 
         // Restore inventory
+//        for (OrderItem item : order.getItems()) {
+//            inventoryService.restoreStock(item.getSkuId(), item.getQuantity());
+//            productSkuRepository.restoreStock(item.getSkuId(), item.getQuantity());
+//        }
+
         for (OrderItem item : order.getItems()) {
             inventoryService.restoreStock(item.getSkuId(), item.getQuantity());
-            productSkuRepository.restoreStock(item.getSkuId(), item.getQuantity());
         }
+
+        // 恢复 DB 库存（异步，通过 Kafka）
+        OrderEvent event = OrderEvent.builder()
+                .eventType("ORDER_CANCELLED")
+                .orderNo(order.getOrderNo())
+                .userId(userId)
+                .timestamp(java.time.LocalDateTime.now())
+                .items(order.getItems().stream()
+                        .map(item -> OrderEvent.OrderItemEvent.builder()
+                                .skuId(item.getSkuId())
+                                .quantity(item.getQuantity())
+                                .build())
+                        .collect(java.util.stream.Collectors.toList()))
+                .build();
+        orderEventProducer.sendOrderCancelled(event);
 
         log.info("Order cancelled: orderNo={}", orderNo);
     }
@@ -227,6 +251,16 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentType(request.getPaymentType());
         order.setPaymentTime(LocalDateTime.now());
         orderRepository.save(order);
+
+        // 发送支付成功事件
+        OrderEvent event = OrderEvent.builder()
+                .eventType("ORDER_PAID")
+                .orderNo(order.getOrderNo())
+                .userId(userId)
+                .totalAmount(order.getPayAmount())
+                .timestamp(LocalDateTime.now())
+                .build();
+        orderEventProducer.sendOrderPaid(event);
 
         log.info("Order paid: orderNo={}, paymentType={}", orderNo, request.getPaymentType());
     }
@@ -307,6 +341,22 @@ public class OrderServiceImpl implements OrderService {
                 .remark(order.getRemark())
                 .items(items)
                 .createdAt(order.getCreatedAt())
+                .build();
+    }
+
+    private OrderEvent buildOrderEvent(String type, Order order, List<OrderRequest.OrderItemRequest> items) {
+        return OrderEvent.builder()
+                .eventType(type)
+                .orderNo(order.getOrderNo())
+                .userId(order.getUser().getId())
+                .totalAmount(order.getPayAmount())
+                .timestamp(LocalDateTime.now())
+                .items(items.stream()
+                        .map(i -> OrderEvent.OrderItemEvent.builder()
+                                .skuId(i.getSkuId())
+                                .quantity(i.getQuantity())
+                                .build())
+                        .collect(Collectors.toList()))
                 .build();
     }
 }
