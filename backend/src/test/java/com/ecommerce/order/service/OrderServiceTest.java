@@ -2,6 +2,7 @@ package com.ecommerce.order.service;
 
 import com.ecommerce.common.exception.BusinessException;
 import com.ecommerce.infrastructure.kafka.OrderEventProducer;
+import com.ecommerce.order.dto.OrderEvent;
 import com.ecommerce.order.dto.OrderRequest;
 import com.ecommerce.order.dto.OrderResponse;
 import com.ecommerce.order.dto.PaymentRequest;
@@ -98,7 +99,7 @@ class OrderServiceTest {
             when(userAddressRepository.findById(1L)).thenReturn(Optional.of(testAddress));
             when(productSkuRepository.findById(1L)).thenReturn(Optional.of(testSku));
             when(inventoryService.deductStock(1L, 2)).thenReturn(true);
-            when(productSkuRepository.deductStock(1L, 2)).thenReturn(1);
+            // when(productSkuRepository.deductStock(1L, 2)).thenReturn(1);
             when(orderRepository.save(any(Order.class))).thenAnswer(inv -> {
                 Order o = inv.getArgument(0);
                 o.setId(1L);
@@ -169,7 +170,8 @@ class OrderServiceTest {
 
             assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELED);
             verify(inventoryService).restoreStock(1L, 2);
-            verify(productSkuRepository).restoreStock(1L, 2);
+            verify(orderEventProducer).sendOrderCancelled(any(OrderEvent.class));
+            // verify(productSkuRepository).restoreStock(1L, 2);
         }
 
         @Test
@@ -213,6 +215,9 @@ class OrderServiceTest {
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
             assertThat(order.getPaymentType()).isEqualTo("CREDIT_CARD");
             assertThat(order.getPaymentTime()).isNotNull();
+            verify(inventoryService).deductStock(1L, 2);
+            verify(orderEventProducer).sendOrderCreated(any(OrderEvent.class));
+            verify(cartService).removeFromCart(1L, 1L);
         }
     }
 
