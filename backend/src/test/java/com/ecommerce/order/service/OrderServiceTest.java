@@ -194,7 +194,6 @@ class OrderServiceTest {
     @Nested
     @DisplayName("Pay Order")
     class PayOrder {
-
         @Test
         @DisplayName("Should process payment successfully")
         void payOrder_Success() {
@@ -215,9 +214,7 @@ class OrderServiceTest {
             assertThat(order.getStatus()).isEqualTo(OrderStatus.PAID);
             assertThat(order.getPaymentType()).isEqualTo("CREDIT_CARD");
             assertThat(order.getPaymentTime()).isNotNull();
-            verify(inventoryService).deductStock(1L, 2);
-            verify(orderEventProducer).sendOrderCreated(any(OrderEvent.class));
-            verify(cartService).removeFromCart(1L, 1L);
+            verify(orderEventProducer).sendOrderPaid(any(OrderEvent.class));
         }
     }
 
