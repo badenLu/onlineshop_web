@@ -2,7 +2,7 @@
 
 > A production-grade full-stack e-commerce platform demonstrating enterprise-level architecture, high-concurrency inventory management, and database optimization strategies.
 
-![Java](https://img.shields.io/badge/Java-17-orange?logo=openjdk)
+![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2-green?logo=springboot)
 ![React](https://img.shields.io/badge/React-18-blue?logo=react)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue?logo=mysql)
