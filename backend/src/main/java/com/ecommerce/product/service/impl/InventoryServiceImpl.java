@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +36,11 @@ public class InventoryServiceImpl implements InventoryService {
     public boolean deductStock(Long skuId, int quantity) {
         String key = STOCK_KEY_PREFIX + skuId;
 
-        Long result = redisTemplate.execute(
+        long result = redisTemplate.execute(
                 new DefaultRedisScript<>(DEDUCT_STOCK_LUA, Long.class),
                 List.of(key),
                 String.valueOf(quantity)
         );
-
-        if (result == null) return false;
 
         if (result == -1) {
             // Cache miss, warm up and retry
@@ -53,7 +50,7 @@ public class InventoryServiceImpl implements InventoryService {
                     List.of(key),
                     String.valueOf(quantity)
             );
-            return result != null && result == 1;
+            return result == 1;
         }
 
         return result == 1;

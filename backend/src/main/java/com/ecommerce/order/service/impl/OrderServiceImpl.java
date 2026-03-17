@@ -28,6 +28,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -231,7 +233,15 @@ public class OrderServiceImpl implements OrderService {
                                 .build())
                         .collect(java.util.stream.Collectors.toList()))
                 .build();
-        orderEventProducer.sendOrderCancelled(event);
+
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // 只有当上面的事务真正“落袋为安”了，才执行这里的发送动作
+                orderEventProducer.sendOrderCancelled(event);
+            }
+        });
 
         log.info("Order cancelled: orderNo={}", orderNo);
     }
