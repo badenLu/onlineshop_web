@@ -3,7 +3,6 @@ import {Card, Row, Col, Tag, Spin, Input, Select, Pagination, message, Button} f
 import { ShoppingCartOutlined } from '@ant-design/icons';
 import { productApi } from '../services/product';
 import { cartApi } from '../services/cart';
-// import { useNavigate } from 'react-router-dom';
 
 export default function ProductListPage() {
   const [products, setProducts] = useState<any[]>([]);
@@ -12,7 +11,6 @@ export default function ProductListPage() {
   const [loading, setLoading] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [sort, setSort] = useState<string>('');
-  // const navigate = useNavigate();
 
   const fetchProducts = async () => {
     setLoading(true);
