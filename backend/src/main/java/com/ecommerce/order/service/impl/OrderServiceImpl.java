@@ -235,14 +235,18 @@ public class OrderServiceImpl implements OrderService {
                 .build();
 
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                // 只有当上面的事务真正“落袋为安”了，才执行这里的发送动作
-                orderEventProducer.sendOrderCancelled(event);
-            }
-        });
-
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            // with transaction：send out after transaction
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    orderEventProducer.sendOrderCancelled(event);
+                }
+            });
+        } else {
+            // no transaction
+            orderEventProducer.sendOrderCancelled(event);
+        }
         log.info("Order cancelled: orderNo={}", orderNo);
     }
 
